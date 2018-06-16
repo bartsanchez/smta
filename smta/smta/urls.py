@@ -17,7 +17,17 @@ from django.contrib import admin
 from django.urls import include
 from django.urls import path
 
+from rest_framework import routers
+
+from users import urls as user_urls
+
+
+router = routers.DefaultRouter()
+user_urls.register(router)
+
+
 urlpatterns = [
+    path('', include(router.urls)),
     path('admin/', admin.site.urls),
     path('api-auth/', include('rest_framework.urls'))
 ]
