@@ -6,6 +6,7 @@ name = "pypi"
 [dev-packages]
 "e1839a8" = {path = ".", editable = true}
 factory-boy = "*"
+tox = "*"
 
 [packages]
 django = "*"
