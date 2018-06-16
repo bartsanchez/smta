@@ -1,3 +1,6 @@
 .eggs/
 *.egg-info
 .tox/
+AUTHORS
+ChangeLog
+*db.sqlite3
