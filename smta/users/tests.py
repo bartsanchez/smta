@@ -11,6 +11,21 @@ class UserModelTests(test.TestCase):
 
         self.assertEqual(str(user), 'foo')
 
+    def test_get_balance__default(self):
+        user = factories.UserFactory()
+
+        self.assertEqual(user.get_balance(), 0.0)
+
+    def test_get_balance__positive(self):
+        user = factories.UserFactory(balance=1984.33)
+
+        self.assertEqual(user.get_balance(), 1984.33)
+
+    def test_get_balance__negative(self):
+        user = factories.UserFactory(balance=-70.8)
+
+        self.assertEqual(user.get_balance(), -70.8)
+
 
 class NonAuthUserEndpointsPermsTests(test.TestCase):
     def setUp(self):
