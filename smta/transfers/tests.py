@@ -56,6 +56,24 @@ class TransferModelTests(test.TestCase):
         self.assertEqual(from_user.get_balance(), -535.82)
         self.assertEqual(to_user.get_balance(), -1215.218)
 
+    def test_execute_transfer__do_not_allow_twice(self):
+        from_user = user_factories.UserFactory(
+            username='paying_user',
+            balance=150,
+        )
+        to_user = user_factories.UserFactory(
+            username='receiving_user',
+            balance=25,
+        )
+        transfer = factories.TransferFactory(
+            from_user=from_user,
+            to_user=to_user,
+            quantity=50,
+        )
+
+        self.assertTrue(transfer.execute_transfer())
+        self.assertFalse(transfer.execute_transfer())
+
 
 class TransferSignalTests(test.TestCase):
     def test_same_origin_and_destiny(self):
@@ -85,6 +103,7 @@ class TransferViewsetTests(tests.AuthenticatedAPITestCase):
             'from_user': 'http://testserver/users/2/',
             'to_user': 'http://testserver/users/3/',
             'quantity': 80486.2,
+            'state': 'PENDING',
         }
         self.client.post('/transfers/', transfer_data)
 
