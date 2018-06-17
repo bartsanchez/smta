@@ -19,11 +19,13 @@ from django.urls import path
 
 from rest_framework import routers
 
+from transfers import urls as transfer_urls
 from users import urls as user_urls
 
 
 router = routers.DefaultRouter()
 user_urls.register(router)
+transfer_urls.register(router)
 
 
 urlpatterns = [
