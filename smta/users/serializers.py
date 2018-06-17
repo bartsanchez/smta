@@ -11,7 +11,7 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = models.User
-        fields = ('url', 'username', 'balance_url')
+        fields = ('url', 'username', 'balance', 'balance_url')
 
     def get_balance_url(self, obj):
         url = reverse.reverse(

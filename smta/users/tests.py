@@ -60,7 +60,7 @@ class UserViewsetTests(tests.AuthenticatedAPITestCase):
         self.assertListEqual(response.json(), [])
 
     def test_new_user(self):
-        self.client.post('/users/', {'username': 'foo'})
+        self.client.post('/users/', {'username': 'foo', 'balance': 25.88})
         response = self.client.get('/users/', follow=True)
 
         self.assertEqual(response.status_code, 200)
@@ -74,6 +74,7 @@ class UserViewsetTests(tests.AuthenticatedAPITestCase):
             [{
                 'username': 'foo',
                 'url': url,
+                'balance': 25.88,
                 'balance_url': '{0}balance/'.format(url),
             }]
         )
