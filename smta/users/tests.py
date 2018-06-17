@@ -67,11 +67,14 @@ class UserViewsetTests(tests.AuthenticatedAPITestCase):
 
         user = models.User.objects.get(username='foo')
 
+        url = 'http://testserver/users/{0}/'.format(user.pk)
+
         self.assertListEqual(
             response.json(),
             [{
                 'username': 'foo',
-                'url': 'http://testserver/users/{0}/'.format(user.pk),
+                'url': url,
+                'balance_url': '{0}balance/'.format(url),
             }]
         )
 
