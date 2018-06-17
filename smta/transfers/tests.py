@@ -1,5 +1,7 @@
 from django import test
 
+from users import factories as user_factories
+
 from transfers import factories
 from transfers import models
 
@@ -14,6 +16,44 @@ class TransferModelTests(test.TestCase):
             str(transfer),
             'paying_user transfers 35.79 to receiving_user'
         )
+
+    def test_execute_transfer(self):
+        from_user = user_factories.UserFactory(
+            username='paying_user',
+            balance=150,
+        )
+        to_user = user_factories.UserFactory(
+            username='receiving_user',
+            balance=25,
+        )
+        transfer = factories.TransferFactory(
+            from_user=from_user,
+            to_user=to_user,
+            quantity=50,
+        )
+
+        self.assertTrue(transfer.execute_transfer())
+        self.assertEqual(from_user.get_balance(), 100)
+        self.assertEqual(to_user.get_balance(), 75)
+
+    def test_execute_transfer__negative(self):
+        from_user = user_factories.UserFactory(
+            username='paying_user',
+            balance=-250.33,
+        )
+        to_user = user_factories.UserFactory(
+            username='receiving_user',
+            balance=-1500.708,
+        )
+        transfer = factories.TransferFactory(
+            from_user=from_user,
+            to_user=to_user,
+            quantity=285.49,
+        )
+
+        self.assertTrue(transfer.execute_transfer())
+        self.assertEqual(from_user.get_balance(), -535.82)
+        self.assertEqual(to_user.get_balance(), -1215.218)
 
 
 class TransferViewsetTests(tests.AuthenticatedAPITestCase):

@@ -1,4 +1,7 @@
+import threading
+
 from django.db import models
+from django.db import transaction
 
 from users import models as users_models
 
@@ -22,3 +25,14 @@ class Transfer(models.Model):
             self.quantity,
             self.to_user,
         )
+
+    @transaction.atomic
+    def execute_transfer(self):
+        lock = threading.Lock()
+        with lock:
+            self.from_user.balance -= self.quantity
+            self.to_user.balance += self.quantity
+            self.from_user.save()
+            self.to_user.save()
+
+        return True
