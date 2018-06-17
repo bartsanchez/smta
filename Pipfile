@@ -9,6 +9,7 @@ factory-boy = "*"
 tox = "*"
 "flake8" = "*"
 ipdb = "*"
+coverage = "*"
 
 [packages]
 django = "*"
