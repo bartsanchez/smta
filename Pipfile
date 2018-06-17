@@ -10,6 +10,7 @@ tox = "*"
 "flake8" = "*"
 ipdb = "*"
 coverage = "*"
+"psycopg2-binary" = "*"
 
 [packages]
 django = "*"

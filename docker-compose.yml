@@ -1,0 +1,17 @@
+version: '3'
+services:
+  db:
+    image: postgres
+    network_mode: "host"
+    ports:
+      - 5432
+    environment:
+        - POSTGRES_DB=db
+        - POSTGRES_PASSWORD=testdb
+  smta:
+    build: .
+    depends_on:
+      - db
+    network_mode: "host"
+    environment:
+        - DJANGO_SETTINGS_MODULE=smta.settings_prod
