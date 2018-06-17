@@ -1,5 +1,9 @@
 from django import test
 
+from unittest import mock
+
+from rest_framework import test as drf_test
+
 from users import models
 from users import factories
 from smta import tests
@@ -82,3 +86,62 @@ class UserViewsetTests(tests.AuthenticatedAPITestCase):
         self.assertEqual(len(response_json), 2)
         self.assertEqual(response_json[0]['username'], 'foo')
         self.assertEqual(response_json[1]['username'], 'bar')
+
+    def test_balance__user_does_not_exist(self):
+        response = self.client.get('/users/8888/balance', follow=True)
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json()['detail'], 'Not found.')
+
+    @mock.patch('users.models.User.get_balance', return_value=-777.94)
+    def test_balance__is_admin(self, balance_mock):
+        self.client.post('/users/', {'username': 'foo'})
+
+        user = models.User.objects.get(username='foo')
+
+        response = self.client.get(
+            '/users/{0}/balance'.format(user.pk),
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['balance'], -777.94)
+
+        balance_mock.assert_called_once_with()
+
+
+class NotSuperuserUserViewsetTests(drf_test.APITestCase):
+    fixtures = ['example_users']
+
+    def setUp(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Token 19430615fbb3d69f1ad4dd5db6f9a7ddafa193a5'
+        )
+        self.user = models.User.objects.get(username='unprivileged_user')
+        self.assertFalse(self.user.is_superuser)
+
+    @mock.patch('users.models.User.get_balance', return_value=666.66)
+    def test_balance__is_not_admin_but_it_is_its_balance(self, balance_mock):
+        response = self.client.get(
+            '/users/{0}/balance'.format(self.user.pk),
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['balance'], 666.66)
+
+        balance_mock.assert_called_once_with()
+
+    def test_balance__is_not_admin_and_is_not_its_balance(self):
+        user = models.User.objects.get(username='another_user')
+
+        response = self.client.get(
+            '/users/{0}/balance'.format(user.pk),
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.json()['detail'],
+            'You don\'t have permissions to view this balance',
+        )
