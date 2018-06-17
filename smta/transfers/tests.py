@@ -117,7 +117,8 @@ class TransferViewsetTests(tests.AuthenticatedAPITestCase):
 
         transfer = models.Transfer.objects.first()
         url = 'http://testserver/transfers/{0}/'.format(transfer.pk)
-        transfer_data.update({'url': url}),
+        execute_url = '{0}execute/'.format(url)
+        transfer_data.update({'url': url, 'execute_url': execute_url})
 
         self.assertListEqual(response.json(), [transfer_data])
 
