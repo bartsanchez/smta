@@ -22,8 +22,10 @@ Now you should be able to see the application running in localhost at port 8000
 
 It is possible to log in using:
 
+```
 user: administrator
 password: Barcelona2018
+```
 
 # Testing
 In order to testing the application, just:
