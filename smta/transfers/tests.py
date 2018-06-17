@@ -1,7 +1,11 @@
 from django import test
+from django.contrib.auth import models as auth_models
 from django.core import exceptions
 
+from rest_framework import test as drf_test
+
 from users import factories as user_factories
+from users import models as user_models
 
 from transfers import factories
 from transfers import models
@@ -116,3 +120,106 @@ class TransferViewsetTests(tests.AuthenticatedAPITestCase):
         transfer_data.update({'url': url}),
 
         self.assertListEqual(response.json(), [transfer_data])
+
+    def test_execute__OK(self):
+        transfer = factories.TransferFactory()
+
+        response = self.client.post(
+            '/transfers/{0}/execute/'.format(transfer.pk),
+            follow=True
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['detail'], 'Success')
+
+    def test_execute__twice(self):
+        transfer = factories.TransferFactory()
+
+        response = self.client.post(
+            '/transfers/{0}/execute/'.format(transfer.pk),
+            follow=True
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['detail'], 'Success')
+
+        response = self.client.post(
+            '/transfers/{0}/execute/'.format(transfer.pk),
+            follow=True
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.json()['detail'],
+            'The order is not ready to be sent.',
+        )
+
+    def test_execute__transfer_does_not_exist(self):
+        response = self.client.post('/transfers/2022/execute/', follow=True)
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json()['detail'], 'Not found.')
+
+    def test_execute_state_is_not_pending(self):
+        transfer = factories.TransferFactory(state='COMPLETED')
+
+        response = self.client.post(
+            '/transfers/{0}/execute/'.format(transfer.pk),
+            follow=True
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.json()['detail'],
+            'The order is not ready to be sent.',
+        )
+
+
+class NotSuperuserTransferViewsetTests(drf_test.APITestCase):
+    fixtures = ['example_users']
+
+    def setUp(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Token 19430615fbb3d69f1ad4dd5db6f9a7ddafa193a5'
+        )
+        self.user = user_models.User.objects.get(username='unprivileged_user')
+        self.perm = auth_models.Permission.objects.get(codename='add_transfer')
+        self.user.user_permissions.add(self.perm)
+        self.assertFalse(self.user.is_superuser)
+
+    def test_execute__is_not_admin_but_he_is_the_sender(self):
+        user_receiving = user_models.User.objects.get(
+            username='another_user',
+        )
+        transfer = factories.TransferFactory(
+            from_user=self.user,
+            to_user=user_receiving,
+        )
+
+        response = self.client.post(
+            '/transfers/{0}/execute/'.format(transfer.pk),
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['detail'], 'Success')
+
+    def test_execute__is_not_admin_and_he_is_not_the_sender(self):
+        user = user_models.User.objects.get(username='another_user')
+        user.user_permissions.add(self.perm)
+
+        transfer = factories.TransferFactory(
+            from_user=user,
+            to_user=self.user,
+        )
+
+        response = self.client.post(
+            '/transfers/{0}/execute/'.format(transfer.pk),
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.json()['detail'],
+            'You don\'t have permissions to execute this transfer',
+        )
