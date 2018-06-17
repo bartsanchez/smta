@@ -1,4 +1,5 @@
 from django import test
+from django.core import exceptions
 
 from users import factories as user_factories
 
@@ -54,6 +55,20 @@ class TransferModelTests(test.TestCase):
         self.assertTrue(transfer.execute_transfer())
         self.assertEqual(from_user.get_balance(), -535.82)
         self.assertEqual(to_user.get_balance(), -1215.218)
+
+
+class TransferSignalTests(test.TestCase):
+    def test_same_origin_and_destiny(self):
+        user = user_factories.UserFactory()
+        self.assertRaisesRegex(
+            exceptions.ValidationError,
+            'It is not possible to make transfers to the same person who send '
+            'the money.',
+            factories.TransferFactory,
+            from_user=user,
+            to_user=user,
+            quantity=10
+        )
 
 
 class TransferViewsetTests(tests.AuthenticatedAPITestCase):
