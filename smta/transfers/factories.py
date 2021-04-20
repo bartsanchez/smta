@@ -5,7 +5,7 @@ from users import factories as users_factories
 from transfers import models
 
 
-class TransferFactory(factory.DjangoModelFactory):
+class TransferFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = models.Transfer
 
